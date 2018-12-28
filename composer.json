@@ -1,0 +1,20 @@
+{
+    "name": "mozzler/yii2-rbac",
+    "description": "mozzler core",
+    "type": "yii2-extension",
+    "authors": [
+        {
+            "name": "Chris Were",
+            "email": "chris@mozzler.com.au"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "yiisoft/yii2": "~2.0.14"
+    },
+    "autoload": {
+        "psr-4": {
+            "mozzler\\rbac\\": ""
+        }
+    }
+}
