@@ -105,28 +105,6 @@ Define roles in the `mozzler\rbac\Module` configuration option `roles`:
 ]
 ```
 
-### Policy inheritance
-
-Policies follow class inheritance to build a list of all the available policies to check.
-
-For example, assume a controller (`SiteController`) has the following inheritance hierarchy:
-
-- yii\base\Controller
-- yii\web\Controller
-- app\controllers\Base
-- app\controllers\SiteController
-
-The RBAC policies will be built from all four of those controllers, merged in the following order:
-
-1. yii\base\Controller::rbac()
-1. RBAC config file for `yii\base\Controller`
-1. yii\web\Controller::rbac()
-1. RBAC config file for `yii\web\Controller`
-1. app\controllers\Base::rbac()
-1. RBAC config file for `app\controllers\Base`
-1. app\controllers\SiteController::rbac()
-1. RBAC config file for `app\controllers\SiteController`
-
 ### Linking policies and roles
 
 Policies are linked to roles within a static `rbac()` method on the controller or model, or via the RBAC configuration.
@@ -139,8 +117,6 @@ For example, override the static `rbac()` method in a controller:
 namespace app\controllers;
 
 class MyController extends \yii\web\Controller {
-	
-	
 	public static function rbac()
 	{
 		return [
@@ -163,8 +139,7 @@ For example, override the `rbac()` method in a model:
 namespace app\models;
 
 class MyModel extends \yii\mongodb\ActiveRecord {
-	
-	
+
 	public static function rbac()
 	{
 		return [
@@ -190,7 +165,6 @@ class MyModel extends \yii\mongodb\ActiveRecord {
 			]
 		];
 	}
-	
 }
 ```
 
@@ -272,6 +246,28 @@ return [
 ];
 ```
 
+### Policy inheritance
+
+Policies follow class inheritance to build a list of all the available policies to check.
+
+For example, assume a controller (`SiteController`) has the following inheritance hierarchy:
+
+- yii\base\Controller
+- yii\web\Controller
+- app\controllers\Base
+- app\controllers\SiteController
+
+The RBAC policies will be built from all four of those controllers, merged in the following order:
+
+1. yii\base\Controller::rbac()
+1. RBAC config file for `yii\base\Controller`
+1. yii\web\Controller::rbac()
+1. RBAC config file for `yii\web\Controller`
+1. app\controllers\Base::rbac()
+1. RBAC config file for `app\controllers\Base`
+1. app\controllers\SiteController::rbac()
+1. RBAC config file for `app\controllers\SiteController`
+
 ### Writing policies
 
 You can write your own policies by extending `mozzler\rbac\policies\BasePolicy`.
@@ -302,5 +298,5 @@ The `run()` method can perform any logic to return:
 
 - `true`: Grant full access
 - `false`: Don't grant access via this policy
-- `filter(Array)`: PHP Array as a filter to apply to database results (Only applies to Model policies)
+- `filter(Array)`: PHP Array as a filter to apply to database results (Only applies to policies linked to models)
 
