@@ -42,12 +42,6 @@ $config['modules']['rbac'] = [
 	// of putting all your configuration in your main config file
 	'rbacConfigFile' => "config/rbac.php",
 	
-	// default policy paths
-	'policyPaths' => [
-		'@app/rbac/policies',
-		'@mozzler/rbac/policies'
-	],
-	
 	// default roles
 	'roles' => [
 		'public' => [

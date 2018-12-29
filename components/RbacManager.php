@@ -17,11 +17,6 @@ class RbacManager extends \yii\base\Component {
 	public $rbacConfigFile = "@app/config/rbac.php";
 	
 	/**
-	 * Ordered list of paths to search for policies
-	 */
-	public $policyPaths = [];
-	
-	/**
 	 * List of all available roles
 	 */
 	public $roles = [];
