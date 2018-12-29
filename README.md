@@ -246,6 +246,23 @@ return [
 ];
 ```
 
+### Available options
+
+Any action on a controller can be used as an operation to apply RBAC rules. By default a model controller has the following actions:
+
+- index
+- create
+- update
+- view
+- delete
+
+While a model supports the following RBAC operations:
+
+- find
+- create
+- update
+- delete
+
 ### Policy inheritance
 
 Policies follow class inheritance to build a list of all the available policies to check.

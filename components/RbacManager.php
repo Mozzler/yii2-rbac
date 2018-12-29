@@ -52,7 +52,7 @@ class RbacManager extends \yii\base\Component {
 	 * Indicates if informative trace logging is enabled to see what permission
 	 * checks are occuring for each request
 	 */
-	public $traceEnabled = false;
+	public $traceEnabled = true;
 	
     public function init()
     {
@@ -77,7 +77,7 @@ class RbacManager extends \yii\base\Component {
 
 		$this->initRoles();
 
-		$this->log('Initialised with roles: '.join(", ", $this->userRoles));
+		$this->log('Initialised with roles: '.join(", ", $this->userRoles),__METHOD__);
     }
     
     public function can($context, $operation, $params)
@@ -95,7 +95,7 @@ class RbacManager extends \yii\base\Component {
     protected function processPolicies($policiesByRole, $params, $name) {
 		if (sizeof($policiesByRole) == 0) {
 			// Grant access as there are no policies to check
-			$this->log('No valid policies found, granting full access for '.$name);
+			$this->log('No valid policies found, granting full access for '.$name,__METHOD__);
 			return true;
 		}
 		
@@ -106,13 +106,13 @@ class RbacManager extends \yii\base\Component {
 			foreach ($rolePolicies as $policyName => $policy) {
 				// Skip the policy if it doesn't apply to any roles for this user
 				if (!$this->is($role)) {
-					$this->log("Skipping policy ($policyName) as it's for $role");
+					$this->log("Skipping policy ($policyName) as it's for $role",__METHOD__);
 					continue;
 				}
 				
 				// Policy grants full access
 				if ($policy === true) {
-					$this->log("Policy ($policyName) accepted, granting full access for $name");
+					$this->log("Policy ($policyName) accepted, granting full access for $name",__METHOD__);
 					return true;
 				}
 				
@@ -127,32 +127,31 @@ class RbacManager extends \yii\base\Component {
 					$result = $policy->run();
 					if ($result === true) {
 						// Grant full access
-						$this->log("Policy ($policyName) accepted, granting full access for $name");
+						$this->log("Policy ($policyName) accepted, granting full access for $name",__METHOD__);
 						return true;
 					} else if ($result === false) {
 						// Policy doesn't apply, so skip
-						$this->log("Policy ($policyName) doesn't apply, skipping");
+						$this->log("Policy ($policyName) doesn't apply, skipping",__METHOD__);
 						continue;
 					} else if (is_array($result)) {
-						$this->log("Policy ($policyName) has a filter");
+						$this->log("Policy ($policyName) has a filter",__METHOD__);
 						$filters[] = $result;
 					} else {
-						throw new InvalidArgumentException("Policy ($policyName) run() method returned an invalid response type");
+						throw new InvalidArgumentException("Policy ($policyName) run() method returned an invalid response type",__METHOD__);
 					}
 				}
 			}
 		}
 
-		$filters = array_merge(['OR'], $filters);
-
 		// If no filters found after processing policies, deny access
 		// otherwise return the filters
 		if (sizeof($filters) > 0) {
-			$this->log("Applying filter to $name:\n".print_r($filters,true));
+			$this->log("Applying filter to $name:\n".print_r($filters,true),__METHOD__);
+			$filters = array_merge(['OR'], $filters);
 			return $filters;
 		}
 		
-		$this->log("No policies matched, denying access for $name");
+		$this->log("No policies matched, denying access for $name",__METHOD__);
 		return false;
     }
     
@@ -174,7 +173,7 @@ class RbacManager extends \yii\base\Component {
 	
 	public function canAccessCollection($collection, $operation) {
 		if (!isset($this->collectionModels[$collection])) {
-			throw new UnknownClassException("Unable to locate Model class associated with collection ($collection)");
+			throw new UnknownClassException("Unable to locate Model class associated with collection ($collection)",__METHOD__);
 		}
 		
 		$model = \Yii::createObject($this->collectionModels[$collection]);
@@ -275,9 +274,9 @@ class RbacManager extends \yii\base\Component {
 		$this->collectionModels[$collectionName] = $className;
 	}
 	
-	protected function log($message) {
+	protected function log($message, $meta) {
 		if ($this->traceEnabled) {
-			\Yii::trace('Rbac: '.$message, __METHOD__);
+			\Yii::trace('Rbac: '.$message, $meta);
 		}
 	}
 }

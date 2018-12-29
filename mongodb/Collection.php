@@ -29,7 +29,12 @@ class Collection extends BaseCollection {
 			return $condition;
 		} else if ($filter) {
 			// apply the filter as an AND on the query
-			$condition = array_merge(['AND'], [$condition, $filter]);
+			if (sizeof($condition) == 0) {
+				$condition = $filter;
+			}
+			else {
+				$condition = array_merge(['AND'], [$condition, $filter]);
+			}
 		}
 		
 		return $condition;
