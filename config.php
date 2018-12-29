@@ -5,6 +5,8 @@ return [
 		'@app/rbac/policies',
 		'@mozzler/rbac/policies'
 	],
+	'registeredUserRoles' => ['registered'],
+	'adminRole' => 'admin',
 	'roles' => [
 		'public' => [
 			'name' => 'Public'
@@ -15,5 +17,6 @@ return [
 		'registered' => [
 			'name' => 'Registered User'
 		]
-	]
+	],
+	'policies' => []
 ];
