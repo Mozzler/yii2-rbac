@@ -93,6 +93,8 @@ class RbacManager extends \yii\base\Component {
     
     // return true, false or a filter
     protected function processPolicies($policiesByRole, $params, $name) {
+	    $this->log("Checking permission request for $name",__METHOD__);
+	    
 		if (sizeof($policiesByRole) == 0) {
 			// Grant access as there are no policies to check
 			$this->log('No valid policies found, granting full access for '.$name,__METHOD__);
@@ -142,15 +144,43 @@ class RbacManager extends \yii\base\Component {
 				}
 			}
 		}
-
-		// If no filters found after processing policies, deny access
-		// otherwise return the filters
+		
+		// If filters exist, join them with an "OR" query
 		if (sizeof($filters) > 0) {
 			$this->log("Applying filter to $name:\n".print_r($filters,true),__METHOD__);
 			$filters = array_merge(['OR'], $filters);
+		
+			if (isset($params["_id"]) && isset($params["model"])) {
+				$this->log("Have a specific model, so attempting to fetch with Rbac filter to establish if permission is granted", __METHOD__);
+	
+				// A specific model is being requested, so need to perform a query with the filter
+				// to establish if permission is granted
+				$model = $params['model'];
+				
+				$query = $model->find();
+				$query->andWhere($filters);
+				$query->andWhere([
+					'_id' => $params['_id']
+				]);
+				
+				$query->checkPermissions = false;
+				$results = $query->one();
+				
+				if ($results) {
+					// Found the model with the security filter applied so the user has permission to access
+					$this->log('Model '.$params['_id'].' was found, permission granted', __METHOD__);
+					return true;
+				}
+				
+				// Didn't find the model with the security model appied so the user can not access
+				$this->log('Model '.$params['_id'].' was not found, permission denied', __METHOD__);
+				return false;
+			}
+			
 			return $filters;
 		}
 		
+		// No filters exist, but policies existed, so deny access
 		$this->log("No policies matched, denying access for $name",__METHOD__);
 		return false;
     }
@@ -165,22 +195,15 @@ class RbacManager extends \yii\base\Component {
 		]);
 	}
 	
-	public function canAccessModel($model, $operation) {
-		return $this->can($model, $operation, [
-			'model' => $model
-		]);
-	}
-	
-	public function canAccessCollection($collection, $operation) {
+	public function canAccessCollection($collection, $operation, $metadata=[]) {
 		if (!isset($this->collectionModels[$collection])) {
 			throw new UnknownClassException("Unable to locate Model class associated with collection ($collection)",__METHOD__);
 		}
 		
 		$model = \Yii::createObject($this->collectionModels[$collection]);
+		$metadata['model'] = $model;
 		
-		return $this->can($model, $operation, [
-			'model' => $model
-		]);
+		return $this->can($model, $operation, $metadata);
 	}
 	
 	/**
