@@ -119,7 +119,7 @@ The RBAC policies will be built from all four of those controllers, merged in th
 1. app\controllers\SiteController::rbac()
 1. RBAC config file for `app\controllers\SiteController`
 
-### Defining policies
+### Linking policies and roles
 
 Policies are linked to roles within a static `rbac()` method on the controller or model, or via the RBAC configuration.
 
@@ -264,3 +264,34 @@ return [
 ];
 ```
 
+### Writing policies
+
+You can write your own policies by extending `mozzler\rbac\policies\BasePolicy`.
+
+For example, see the simple `GrantPolicy` which takes a `grant` property to define whether the policy should grant access:
+
+```
+<?php
+namespace mozzler\rbac\policies;
+
+/**
+ * Policy that always returns true, for testing
+ */
+class GrantPolicy extends BasePolicy {
+	
+	public $grant = true;
+	
+	public function run() {
+		return $this->grant;
+	}
+	
+}
+
+?>
+```
+
+The `run()` method can perform any logic to return:
+
+- `true`: Grant full access
+- `false`: Don't grant access via this policy
+- `filter(Array)`: PHP Array as a filter to apply to database results (Only applies to Model policies)

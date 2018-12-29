@@ -14,7 +14,12 @@ class RbacFilter extends ActionFilter
 	    {
 		    throw new ForbiddenHttpException("No permission to access this page");
 	    }
+
         return parent::beforeAction($action);
+    }
+    
+    public static function rbac() {
+	    return [];
     }
     
 }
