@@ -1,5 +1,5 @@
 <?php
-namespace mozzler\rbac\policies\model;
+namespace mozzler\rbac\policies;
 
 use mozzler\rbac\policies\BasePolicy;
 
@@ -10,17 +10,17 @@ use mozzler\rbac\policies\BasePolicy;
 class IsOwnerModelPolicy extends BasePolicy {
 	
 	public $idAttribute = '_id';
-	public $ownerAttribute = 'insertedUserid';
+	public $ownerAttribute = 'createdUserId';
 	
 	public function run() {
-		$user = \Yii::$app->user->identity;
+		$user = \Yii::$app->user->getIdentity();
 		
 		if (!$user) {
 			return false;
 		}
 		
 		return [
-			$this->idAttribute => $user->__get($this->ownerAttribute)
+			$this->ownerAttribute => strval($user->__get($this->idAttribute))
 		];
 	}
 	
