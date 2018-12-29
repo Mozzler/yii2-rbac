@@ -233,7 +233,10 @@ class RbacManager extends \yii\base\Component {
 	 */
 	protected function getUserRoles($user)
 	{
-		// TODO
+		if (is_array($user->roles)) {
+			return $user->roles;
+		}
+		
 		return [];
 	}
 	
@@ -301,6 +304,23 @@ class RbacManager extends \yii\base\Component {
 		if ($this->traceEnabled) {
 			\Yii::trace('Rbac: '.$message, $meta);
 		}
+	}
+	
+	/**
+	 * Get a list of key/value list of options
+	 */
+	public function getRoleOptions($excludeDefaults=true) {
+		$options = [];
+		foreach ($this->roles as $roleName => $role) {
+			$options[$roleName] = $role['name'];
+		}
+		
+		if ($excludeDefaults) {
+			unset($options['public']);
+			unset($options['registered']);
+		}
+		
+		return $options;
 	}
 }
 
