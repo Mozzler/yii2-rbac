@@ -59,6 +59,8 @@ Model policies will restrict access to model queries (`find()`, `insert()`, `upd
 
 ### Verification process
 
+TLDR; If no policies apply, access is granted. If policies apply, at least one policy must return `true` (or a database filter) otherwise access is denied.
+
 The process for verifying a model / action request is as follows:
 
 1. Establish the roles that apply for the logged in user
@@ -67,7 +69,7 @@ The process for verifying a model / action request is as follows:
 1. If any policies return `true`, access is granted
 1. If any model policies return a filter, access granted however the returned filter is applied to the database query
 1. If policies are found and there is no filter result or `true` result, access is denied
-1. Where more than one policy returns a filter, all the filters are applied using `AND`
+1. Where more than one policy returns a filter, all the filters are applied using `OR` meaning any filter can match and provide access
 
 ### Defaults
 
@@ -167,13 +169,13 @@ class MyModel extends \yii\mongodb\ActiveRecord {
 				// allow deleting of records owned by the current user
 				// using a built in policy
 				'delete' => [
-					'delete-own' => '\mozzler\rbac\policies\UserOwnRecords'
+					'delete-own' => '\mozzler\rbac\policies\model\IsOwnerModelPolicy'
 				],
 				// allow updating records, but only linked to the current user
 				// using a built in policy, but providing custom configuration
 				'update' => [
 					'update-own' => [
-						'class' => '\mozzler\rbac\policies\UserOwnRecords',
+						'class' => '\mozzler\rbac\policies\model\IsOwnerModelPolicy',
 						'ownerAttribute' => 'ownerId'
 					]
 				]
@@ -208,13 +210,13 @@ return [
 				// allow deleting of records owned by the current user
 				// using a built in policy
 				'delete' => [
-					'delete-own' => '\mozzler\rbac\policies\UserOwnRecords'
+					'delete-own' => '\mozzler\rbac\policies\model\IsOwnerModelPolicy'
 				],
 				// allow updating records, but only linked to the current user
 				// using a built in policy, but providing custom configuration
 				'update' => [
 					'update-own' => [
-						'class' => '\mozzler\rbac\policies\UserOwnRecords',
+						'class' => '\mozzler\rbac\policies\model\IsOwnerModelPolicy',
 						'ownerAttribute' => 'ownerId'
 					]
 				]
