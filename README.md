@@ -18,6 +18,20 @@ $config['modules']['rbac'] = [
 ];
 ```
 
+All `ActiveRecord` models must extend from `mozzler\rbac\mongodb\ActiveRecord` (currently only MongoDB support exists). This ensures the Model Permissions are correctly hooked into this RBAC Module.
+
+The User model used in the application (see application config (`['components']['user']['class']`) must have a `findIdentity()` method that disables disables permission checks when searching for a User. This is so that logged in users can be located in the database.
+
+For example:
+
+```
+public static function findIdentity($id)
+{
+    // Don't check permissions when finding an Identity
+    return self::findOne($id, false);
+}
+```
+
 ## Configuration
 
 ```
@@ -295,3 +309,4 @@ The `run()` method can perform any logic to return:
 - `true`: Grant full access
 - `false`: Don't grant access via this policy
 - `filter(Array)`: PHP Array as a filter to apply to database results (Only applies to Model policies)
+
