@@ -85,7 +85,7 @@ class Collection extends BaseCollection {
     	return parent::remove($condition, $options);
     }
     
-    private function checkPermissions($operation, $metadata) {
+    private function checkPermissions($operation, $metadata=[]) {
 	    if ($this->checkPermissions) {
 			$filter = \Yii::$app->rbac->canAccessCollection($this->name, $operation, $metadata);
 			

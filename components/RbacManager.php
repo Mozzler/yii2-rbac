@@ -49,10 +49,21 @@ class RbacManager extends \yii\base\Component {
 	private $collectionModels = [];
 	
 	/**
+	 * List of collections that should not have permissions checked
+	 */
+	public $ignoredCollections = [];
+	
+	/**
 	 * Indicates if informative trace logging is enabled to see what permission
 	 * checks are occuring for each request
 	 */
 	public $traceEnabled = true;
+	
+	/**
+	 * Boolean indicating if the RBAC manager is active. Internally this is
+	 * set once Yii2 application is initialised (App::EVENT_BEFORE_REQUEST)
+	 */
+	private $isActive = false;
 	
     public function init()
     {
@@ -76,13 +87,17 @@ class RbacManager extends \yii\base\Component {
 		\Yii::$container->set('yii\mongodb\ActiveQuery', 'mozzler\rbac\mongodb\ActiveQuery');
 
 		$this->initRoles();
+		
+		\Yii::$app->on(\yii\base\Application::EVENT_BEFORE_REQUEST, function ($event) {
+			\Yii::$app->rbac->setActive();
+		});
 
 		$this->log('Initialised with roles: '.join(", ", $this->userRoles),__METHOD__);
     }
     
     public function can($context, $operation, $params)
     {
-	    if ($this->is('admin')) {
+	    if (!$this->isActive || $this->is('admin')) {
 		    return true;
 	    }
 	    
@@ -196,8 +211,13 @@ class RbacManager extends \yii\base\Component {
 	}
 	
 	public function canAccessCollection($collection, $operation, $metadata=[]) {
+		// Check if the collection should not have RBAC applied
+		if (in_array($collection, $this->ignoredCollections)) {
+			return true;
+		}
+		
 		if (!isset($this->collectionModels[$collection])) {
-			throw new UnknownClassException("Unable to locate Model class associated with collection ($collection)",__METHOD__);
+			throw new UnknownClassException("Unable to locate Model class associated with collection ($collection)");
 		}
 		
 		$model = \Yii::createObject($this->collectionModels[$collection]);
@@ -321,6 +341,18 @@ class RbacManager extends \yii\base\Component {
 		}
 		
 		return $options;
+	}
+	
+	public function setActive() {
+		$this->isActive = true;
+		$this->log('Is active', __METHOD__);
+	}
+	
+	public function ignoreCollection($collectionName) {
+		if (!in_array($collectionName, $this->ignoredCollections)) {
+			$this->log("Ignoring permission checks on $collectionName", __METHOD__);
+			$this->ignoredCollections[] = $collectionName;
+		}
 	}
 }
 
