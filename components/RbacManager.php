@@ -87,10 +87,9 @@ class RbacManager extends \yii\base\Component {
 		
 		\Yii::$container->set('yii\mongodb\Collection', 'mozzler\rbac\mongodb\Collection');
 		\Yii::$container->set('yii\mongodb\ActiveQuery', 'mozzler\rbac\mongodb\ActiveQuery');
-
-		$this->initRoles();
 		
 		\Yii::$app->on(\yii\base\Application::EVENT_BEFORE_REQUEST, function ($event) {
+			$this->initRoles();
 			\Yii::$app->rbac->setActive();
 		});
 
