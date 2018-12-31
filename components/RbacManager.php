@@ -90,10 +90,9 @@ class RbacManager extends \yii\base\Component {
 		
 		\Yii::$app->on(\yii\base\Application::EVENT_BEFORE_REQUEST, function ($event) {
 			$this->initRoles();
+			$this->log('Initialised with user roles: '.join(", ", $this->userRoles),__METHOD__);
 			\Yii::$app->rbac->setActive();
 		});
-
-		$this->log('Initialised with user roles: '.join(", ", $this->userRoles),__METHOD__);
     }
     
     public function can($context, $operation, $params)
@@ -346,7 +345,6 @@ class RbacManager extends \yii\base\Component {
 	
 	public function setActive() {
 		$this->isActive = true;
-		$this->log('Is active', __METHOD__);
 	}
 	
 	public function ignoreCollection($collectionName) {
