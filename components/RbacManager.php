@@ -57,7 +57,7 @@ class RbacManager extends \yii\base\Component {
 	 * Indicates if informative trace logging is enabled to see what permission
 	 * checks are occuring for each request
 	 */
-	public $traceEnabled = true;
+	public $traceEnabled = false;
 	
 	/**
 	 * Boolean indicating if the RBAC manager is active. Internally this is
@@ -70,13 +70,15 @@ class RbacManager extends \yii\base\Component {
         parent::init();
         
         // Add core config
-        \Yii::configure($this, require __DIR__ . '/../config.php');
+        $config = require __DIR__ . '/../config.php';
         
         // Add custom config if it exists
         $customConfig = \Yii::getAlias($this->rbacConfigFile);
         if (file_exists($customConfig)) {
-        	\Yii::configure($this, require $customConfig);
+	        $config = ArrayHelper::merge($config, require $customConfig);
         }
+        
+        \Yii::configure($this, $config);
         
         // Inject the Rbac actions into all application controllers
 		\Yii::$app->attachBehavior('rbac', [
@@ -92,7 +94,7 @@ class RbacManager extends \yii\base\Component {
 			\Yii::$app->rbac->setActive();
 		});
 
-		$this->log('Initialised with roles: '.join(", ", $this->userRoles),__METHOD__);
+		$this->log('Initialised with user roles: '.join(", ", $this->userRoles),__METHOD__);
     }
     
     public function can($context, $operation, $params)
