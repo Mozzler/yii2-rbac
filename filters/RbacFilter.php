@@ -26,13 +26,14 @@ class RbacFilter extends \yii\base\Behavior
         if($response !== null) {
             $isValid = $response->isInformational() || $response->isSuccessful() || $response->isRedirection();
         }
-        if(!$isValid) {
-            throw new HttpException($response->getStatusCode(), $this->getErrorMessage($response), $response->getParameter('error_uri'));
-        }
 	    
 	    // Check if RBAC permissions permit access to this controller
 	    if (!\Yii::$app->rbac->canAccessAction($event->action))
 	    {
+		    if(!$isValid) {
+	            throw new HttpException($response->getStatusCode(), $this->getErrorMessage($response), $response->getParameter('error_uri'));
+	        }
+	        
 		    throw new ForbiddenHttpException("No permission to access this page");
 	    }
     }
