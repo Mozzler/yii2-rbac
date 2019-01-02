@@ -79,25 +79,18 @@ class RbacManager extends \yii\base\Component {
         }
         
         \Yii::configure($this, $config);
-        
-        // Inject the Rbac actions into all application controllers
-		\Yii::$app->attachBehavior('rbac', [
-			'class' => RbacFilter::className()
-		]);
 		
 		\Yii::$container->set('yii\mongodb\Collection', 'mozzler\rbac\mongodb\Collection');
 		\Yii::$container->set('yii\mongodb\ActiveQuery', 'mozzler\rbac\mongodb\ActiveQuery');
-		
-		\Yii::$app->on(\yii\base\Application::EVENT_BEFORE_REQUEST, function ($event) {
-			$this->initRoles();
-			$this->log('Initialised with user roles: '.join(", ", $this->userRoles),__METHOD__);
-			\Yii::$app->rbac->setActive();
-		});
     }
     
     public function can($context, $operation, $params)
     {
-	    if (!$this->isActive || $this->is('admin')) {
+	    if (!$this->isActive) {
+		    $this->setActive();
+	    }
+	    
+	    if ($this->is('admin')) {
 		    return true;
 	    }
 	    
@@ -238,8 +231,9 @@ class RbacManager extends \yii\base\Component {
 	 */
 	protected function initRoles() {
 		$user = \Yii::$app->user->getIdentity();
-		
-		if ($user) {		
+
+		if ($user) {
+			$this->log("Found user ".$user->id." with roles: ".join($this->getUserRoles($user),", "), __METHOD__);
 			// Add registered user roles
 			$this->userRoles = array_merge($this->userRoles, $this->registeredUserRoles);
 			
@@ -345,6 +339,8 @@ class RbacManager extends \yii\base\Component {
 	
 	public function setActive() {
 		$this->isActive = true;
+		$this->initRoles();
+		$this->log('Initialised with user roles: '.join(", ", $this->userRoles),__METHOD__);
 	}
 	
 	public function ignoreCollection($collectionName) {
