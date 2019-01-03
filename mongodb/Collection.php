@@ -90,7 +90,7 @@ class Collection extends BaseCollection {
 			$filter = \Yii::$app->rbac->canAccessCollection($this->name, $operation, $metadata);
 			
 			if ($filter === false) {
-				$message = "No permission to perform $operation on ".$this->name;
+				$message = "No permission to perform $operation on model ".$this->name;
 				if (isset($metadata['_id'])) {
 					$message .= ' ('.$metadata['_id'].')';
 				}

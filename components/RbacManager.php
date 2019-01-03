@@ -219,6 +219,14 @@ class RbacManager extends \yii\base\Component {
 		return $this->can($model, $operation, $metadata);
 	}
 	
+	public function canAccessModel($model, $operation, $metadata=[]) {
+		if (!isset($metadata['model'])) {
+			$metadata['model'] = $model;
+		}
+		
+		return $this->can($model, $operation, $metadata);
+	}
+	
 	/**
 	 * Check if the current user belongs to the given role
 	 */
