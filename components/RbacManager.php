@@ -69,7 +69,7 @@ class RbacManager extends \yii\base\Component {
 	 * Force the system to be in admin mode, which effectively disables all
 	 * permission checks
 	 */
-	public function $forceAdmin = false;
+	public $forceAdmin = false;
 	
     public function init()
     {
