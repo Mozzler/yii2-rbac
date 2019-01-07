@@ -38,10 +38,14 @@ class RbacManager extends \yii\base\Component {
 	public $policies = [];
 	
 	/**
-	 * Roles of the current logged in user. Any default
-	 * values will be applied to all users.
+	 * Default roles to apply to all users
 	 */
-	private $userRoles = ['public'];
+	public $defaultUserRoles = ['public'];
+	
+	/**
+	 * Roles of the current logged in user
+	 */
+	private $userRoles = [];
 	
 	/**
 	 * Mapping of collections to models
@@ -85,9 +89,12 @@ class RbacManager extends \yii\base\Component {
         }
         
         \Yii::configure($this, $config);
+        
+        $this->userRoles = $this->defaultUserRoles;
 		
 		\Yii::$container->set('yii\mongodb\Collection', 'mozzler\rbac\mongodb\Collection');
 		\Yii::$container->set('yii\mongodb\ActiveQuery', 'mozzler\rbac\mongodb\ActiveQuery');
+		\Yii::$app->user->on(\yii\web\User::EVENT_AFTER_LOGIN, [$this, "initRoles"]);
     }
     
     public function can($context, $operation, $params)
@@ -248,11 +255,14 @@ class RbacManager extends \yii\base\Component {
 
 		if ($user) {
 			$this->log("Found user ".$user->id." with roles: ".join($this->getUserRoles($user),", "), __METHOD__);
-			// Add registered user roles
-			$this->userRoles = array_merge($this->userRoles, $this->registeredUserRoles);
+			
+			// Initialise roles with defaults plus registered user roles
+			$this->userRoles = array_merge($this->defaultUserRoles, $this->registeredUserRoles);
 			
 			// Add this user's custom roles
 			$this->userRoles = array_merge($this->userRoles, $this->getUserRoles($user));
+			
+			$this->log('Initialised with user roles: '.join(", ", $this->userRoles),__METHOD__);
 		}
 	}
 	
@@ -331,6 +341,7 @@ class RbacManager extends \yii\base\Component {
 	protected function log($message, $meta) {
 		if ($this->traceEnabled) {
 			\Yii::trace('Rbac: '.$message, $meta);
+			//\Codeception\Util\Debug::debug($message);
 		}
 	}
 	
@@ -354,7 +365,6 @@ class RbacManager extends \yii\base\Component {
 	public function setActive() {
 		$this->isActive = true;
 		$this->initRoles();
-		$this->log('Initialised with user roles: '.join(", ", $this->userRoles),__METHOD__);
 	}
 	
 	public function ignoreCollection($collectionName) {
