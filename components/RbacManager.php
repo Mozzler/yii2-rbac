@@ -214,9 +214,13 @@ class RbacManager extends \yii\base\Component {
 		if (in_array($collection, $this->ignoredCollections)) {
 			return true;
 		}
-		
+
+        if ($this->forceAdmin) {
+            return true;
+        }
+
 		if (!isset($this->collectionModels[$collection])) {
-		    // If you are using codeception for testing and get this error then try running createObject on the model. e.g: \Yii::createObject('mozzler\auth\models\oauth\OAuthClientModel');
+		    // If you are using codeception for testing and get this error then try running it with `\Yii::$app->rbac->forceAdmin = true;` if adding fixtures or use createObject on the model. e.g: `\Yii::createObject('mozzler\auth\models\oauth\OAuthClientModel');`
 			throw new UnknownClassException("Unable to locate Model class associated with collection ($collection)");
 		}
 		
