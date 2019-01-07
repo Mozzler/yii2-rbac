@@ -216,6 +216,7 @@ class RbacManager extends \yii\base\Component {
 		}
 		
 		if (!isset($this->collectionModels[$collection])) {
+		    // If you are using codeception for testing and get this error then try running createObject on the model. e.g: \Yii::createObject('mozzler\auth\models\oauth\OAuthClientModel');
 			throw new UnknownClassException("Unable to locate Model class associated with collection ($collection)");
 		}
 		
