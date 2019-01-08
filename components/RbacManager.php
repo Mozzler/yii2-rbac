@@ -94,7 +94,11 @@ class RbacManager extends \yii\base\Component {
 		
 		\Yii::$container->set('yii\mongodb\Collection', 'mozzler\rbac\mongodb\Collection');
 		\Yii::$container->set('yii\mongodb\ActiveQuery', 'mozzler\rbac\mongodb\ActiveQuery');
-		\Yii::$app->user->on(\yii\web\User::EVENT_AFTER_LOGIN, [$this, "initRoles"]);
+		
+		// User may not exist (ie: In a console application)
+		if (\Yii::$app->has('user')) {
+    		\Yii::$app->user->on(\yii\web\User::EVENT_AFTER_LOGIN, [$this, "initRoles"]);
+		}
     }
     
     public function can($context, $operation, $params)
