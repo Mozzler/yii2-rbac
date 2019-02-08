@@ -55,7 +55,7 @@ class RbacManager extends \yii\base\Component {
 	/**
 	 * List of collections that should not have permissions checked
 	 */
-	public $ignoredCollections = [];
+	public $ignoredCollections = ['app.cache'];
 	
 	/**
 	 * Indicates if informative trace logging is enabled to see what permission
