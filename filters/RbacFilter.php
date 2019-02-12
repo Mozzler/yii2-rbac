@@ -19,12 +19,16 @@ class RbacFilter extends \yii\base\Behavior
     
     public function beforeAction($event)
     {   
-	    // Check if OAuth2 token is valid
-	    $response = \Yii::$app->getModule('oauth2')->getServer()->getResponse();
+        // Check if OAuth2 token is valid
+        if (\Yii::$app->getModule('oauth2')) {
+            $response = \Yii::$app->getModule('oauth2')->getServer()->getResponse();
 
-        $isValid = true;
-        if($response !== null) {
-            $isValid = $response->isInformational() || $response->isSuccessful() || $response->isRedirection();
+            $isValid = true;
+            if($response !== null) {
+                $isValid = $response->isInformational() || $response->isSuccessful() || $response->isRedirection();
+            }
+        } else {
+            $isValid = true;
         }
 	    
 	    // Check if RBAC permissions permit access to this controller
