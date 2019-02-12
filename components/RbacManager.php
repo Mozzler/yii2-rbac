@@ -384,6 +384,28 @@ class RbacManager extends \yii\base\Component {
 			$this->ignoredCollections[] = $collectionName;
 		}
 	}
+
+    /**
+     * @param $collectionName
+     *
+     * Remove the collectionName from the ignored collections array.
+     * This is mainly used by the codeception tests
+     *
+     * Example datastructure $this->ignoredCollections = Array
+     * (
+     * [0] => app.session
+     * [1] => viterra.deviceFavourite
+     * )
+     *
+     * \Yii::$app->rbac->dontIgnoreCollection('viterra.deviceFavourite')
+     */
+    public function dontIgnoreCollection($collectionName)
+    {
+        if (in_array($collectionName, $this->ignoredCollections)) {
+            $this->log("Adding back permission checks on $collectionName", __METHOD__);
+            unset($this->ignoredCollections[array_search($collectionName, $this->ignoredCollections)]);
+        }
+    }
 }
 
 ?>
