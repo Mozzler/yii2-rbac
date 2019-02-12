@@ -258,6 +258,10 @@ class RbacManager extends \yii\base\Component {
 	 * Determine the roles available for this user
 	 */
 	protected function initRoles() {
+		if (!\Yii::$app->has('user')) {
+			return;
+		}
+
 		$user = \Yii::$app->user->getIdentity();
 
 		if ($user) {
