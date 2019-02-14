@@ -8,7 +8,7 @@ class GrantPolicy extends BasePolicy {
 	
 	public $grant = true;
 	
-	public function run() {
+	public function run($params=[]) {
 		return $this->grant;
 	}
 	

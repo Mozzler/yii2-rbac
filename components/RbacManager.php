@@ -151,7 +151,7 @@ class RbacManager extends \yii\base\Component {
 				$policy = \Yii::createObject($policy);
 				
 				if ($policy instanceof \mozzler\rbac\policies\BasePolicy) {
-					$result = $policy->run();
+					$result = $policy->run($params);
 					if ($result === true) {
 						// Grant full access
 						$this->log("Policy ($policyName) accepted, granting full access for $name",__METHOD__);

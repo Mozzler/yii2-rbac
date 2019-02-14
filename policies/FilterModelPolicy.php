@@ -8,7 +8,7 @@ class FilterModelPolicy extends BasePolicy {
 	
 	public $filter = [];
 	
-	public function run() {
+	public function run($params=[]) {
 		return $this->filter;
 	}
 	
