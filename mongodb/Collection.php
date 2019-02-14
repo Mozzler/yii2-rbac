@@ -83,7 +83,21 @@ class Collection extends BaseCollection {
     	$this->checkPermissions("delete", $metadata);
     	
     	return parent::remove($condition, $options);
-    }
+		}
+		
+		public function count($condition = [], $options = [])
+		{
+			/**
+			 * DataGrid sometimes passes null / false to the condition, so
+			 * need to ensure we have an array
+			 */
+			if (!$condition) {
+				$condition = [];
+			}
+
+			$condition = $this->buildPermissionFilter('find', $condition);
+			return parent::count($condition, $options);
+		}
     
     private function checkPermissions($operation, $metadata=[]) {
 	    if ($this->checkPermissions) {

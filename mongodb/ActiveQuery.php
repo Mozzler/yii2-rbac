@@ -23,6 +23,12 @@ class ActiveQuery extends BaseActiveQuery {
     	$this->rbacOperation = 'find';
     	return parent::one($db);
     }
+
+    public function count($q = '*', $db=null)
+    {
+        $this->rbacOperation = 'find';
+        return parent::count($q, $db);
+    }
     
     public function getCollection($db = null) {
         $collection = parent::getCollection($db);
