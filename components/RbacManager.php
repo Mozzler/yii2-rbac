@@ -100,7 +100,12 @@ class RbacManager extends \yii\base\Component {
     		\Yii::$app->user->on(\yii\web\User::EVENT_AFTER_LOGIN, [$this, "initRoles"]);
 		}
     }
-    
+	
+	/**
+	 * @param $context 		Action or Model instance
+	 * @param $operation	ie: find, update, delete
+	 * @param $params		ie: ['model' => $model]
+	 */
     public function can($context, $operation, $params)
     {
 	    if (!$this->isActive) {
