@@ -245,11 +245,39 @@ class RbacManager extends \yii\base\Component {
 	}
 	
 	public function canAccessModel($model, $operation, $metadata=[]) {
-		if (!isset($metadata['model'])) {
-			$metadata['model'] = $model;
+		$result = $this->can($model, $operation, $metadata);
+
+		if ($result === true) {
+			return true;
+		} elseif ($result === false) {
+			return false;
 		}
-		
-		return $this->can($model, $operation, $metadata);
+		else {
+			/**
+			 * We have a database filter that determines if the user can access this model.
+			 * 
+			 * Run the query trying to find the model.
+			 */
+			$query = $model->find();
+			$query->andWhere($result);
+			$query->andWhere([
+				"_id" => $model->id
+			]);
+			
+			$query->checkPermissions = false;
+			\Yii::trace("About to see if I have permission to $operation this ".$model->collectionName());
+			$queryCount = $query->count();
+			
+			if ($queryCount >= 1) {
+				// found the model with the security filter applied so
+				// user has permission to access
+				return true;
+			}
+			
+			// didn't find the model with the security model appied
+			// so the user can not access
+			return false;
+		}
 	}
 	
 	/**
