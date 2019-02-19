@@ -5,6 +5,7 @@ use Yii;
 use yii\web\ErrorAction;
 use mozzler\rbac\filters\RbacFilter;
 use yii\helpers\ArrayHelper;
+use mozzler\base\helpers\ControllerHelper;
 
 use yii\base\InvalidArgumentException;
 use yii\base\UnknownClassException;
@@ -213,7 +214,37 @@ class RbacManager extends \yii\base\Component {
 		// No filters exist, but policies existed, so deny access
 		$this->log("No policies matched, denying access for $name",__METHOD__);
 		return false;
-    }
+	}
+	
+	/**
+	 * Check if the currently logged in user can access a specific
+	 * action on a controller linked to a model.
+	 * 
+	 * @param	$controller	mixed	Instance of `yii\base\Controller` or a string representing the full class name of a controller
+	 * @param	$action	string		String representation of the action (ie: `index`)
+	 * @return	boolean				True if the current user can access the action on the controller
+	 */
+	public function canAccessControllerAction($controller, $actionName) {
+		// Convert controller to a proper Controller object if it's a string
+		if (is_string($controller)) {
+			$controllerObj = ControllerHelper::buildController($controller);
+
+			// Unable to create a class for the given controller object
+			if (!$controllerObj) {
+				throw new \yii\base\UnknownPropertyException('Unable to locate requested controller ('.$controller.') when checking permissions');
+			}
+
+			$controller = $controllerObj;
+		}
+
+		$action = $controller->createAction($actionName);
+
+		if (!$action) {
+			throw new \yii\base\UnknownPropertyException('Unable to locate requested action ('.$actionName.') when checking permissions');
+		}
+
+		return $this->canAccessAction($action);
+	}
     
     public function canAccessAction($action) {
 		if ($action::className() == ErrorAction::className()) {
