@@ -42,7 +42,7 @@ class Collection extends BaseCollection {
 	}
 	
 	public function insert($data, $options = [], $throwException = false) {
-    	$this->checkPermissions("create");
+    	$this->checkPermissions("insert");
     	
 		return parent::insert($data, $options);
     }
@@ -59,7 +59,7 @@ class Collection extends BaseCollection {
     }
 
     public function save($data, $options=[]) {
-    	$operation = "create";
+    	$operation = "insert";
     	
     	if (isset($data['_id']) || isset($data->_id)) {
     		$operation = "update";
