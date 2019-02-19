@@ -22,7 +22,7 @@ class IsOwnerModelPolicy extends BasePolicy {
 
 		$match = $user->__get($this->idAttribute);
 
-		if (substr($this->idAttribute,-2) == 'Id') {
+		if (substr($this->idAttribute,-2) == 'Id' || $this->idAttribute == '_id') {
 			$match = Tools::ensureId($match);
 		}
 
