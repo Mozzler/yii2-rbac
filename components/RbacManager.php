@@ -51,6 +51,14 @@ class RbacManager extends \yii\base\Component {
 	public $defaultUserRoles = ['public'];
 
 	/**
+	 * Roles that are hidden.
+	 * 
+	 * By default, hide `public` and `registered` as they are used internally
+	 * to distguish between logged in and non-logged in users
+	 */
+	public $hiddenUserRoles = ['public', 'registered'];
+
+	/**
 	 * Roles of the current logged in user
 	 */
 	private $userRoles = [];
@@ -423,6 +431,7 @@ class RbacManager extends \yii\base\Component {
 	protected function log($message, $meta) {
 		if ($this->traceEnabled) {
 			\Yii::trace('Rbac: '.$message, $meta);
+			// TODO: Detec if in unit test environment
 			//\Codeception\Util\Debug::debug($message);
 		}
 	}
@@ -430,23 +439,14 @@ class RbacManager extends \yii\base\Component {
 	/**
 	 * Get a list of key/value list of options
 	 */
-	public function getRoleOptions($excludeDefaults=true) {
+	public function getRoleOptions() {
 		$options = [];
 		foreach ($this->roles as $roleName => $role) {
 			$options[$roleName] = $role['name'];
 		}
-		// Example $options:
-        /*
-          array (
-            'public' => 'Public',
-            'admin' => 'Administrator',
-            'registered' => 'Registered User',
-          )
-        */
 
-		if ($excludeDefaults) {
-			unset($options['public']);
-			unset($options['registered']);
+		foreach ($this->hiddenUserRoles as $role) {
+			unset($options[$role]);
 		}
 
 		return $options;
