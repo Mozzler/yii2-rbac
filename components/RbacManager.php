@@ -11,97 +11,104 @@ use yii\base\InvalidArgumentException;
 use yii\base\UnknownClassException;
 
 class RbacManager extends \yii\base\Component {
-	
+
 	/**
 	 * Location of any custom configuration file
 	 */
 	public $rbacConfigFile = "@app/config/rbac.php";
-	
+
 	/**
 	 * List of all available roles
+     *
+     * This will be filled with data from the DB such as:
+      [
+        'public' => [ 'name' => 'Public'],
+        'admin' => ['name' => 'Administrator'],
+        'registered' => ['name' => 'Registered User']
+      ]
 	 */
 	public $roles = [];
-	
+
 	/**
 	 * Name of the admin role that gives unrestricted access
 	 */
 	public $adminRole = 'admin';
-	
+
 	/**
 	 * List of roles a registered user is automatically granted
 	 */
 	public $registeredUserRoles = ['registered'];
-	
+
 	/**
 	 * List of custom policies to apply beyond those embbedded in `rbac()` methods.
 	 * These custom policies will take precedence.
 	 */
 	public $policies = [];
-	
+
 	/**
 	 * Default roles to apply to all users
 	 */
 	public $defaultUserRoles = ['public'];
-	
+
 	/**
 	 * Roles of the current logged in user
 	 */
 	private $userRoles = [];
-	
+
 	/**
 	 * Mapping of collections to models
 	 */
 	private $collectionModels = [];
-	
+
 	/**
 	 * List of collections that should not have permissions checked
 	 */
 	public $ignoredCollections = [];
-	
+
 	/**
 	 * Indicates if informative trace logging is enabled to see what permission
 	 * checks are occuring for each request
 	 */
 	public $traceEnabled = false;
-	
+
 	/**
 	 * Boolean indicating if the RBAC manager is active. Internally this is
 	 * set once Yii2 application is initialised (App::EVENT_BEFORE_REQUEST)
 	 */
 	private $isActive = false;
-	
+
 	/**
 	 * Force the system to be in admin mode, which effectively disables all
 	 * permission checks
 	 */
 	public $forceAdmin = false;
-	
+
     public function init()
     {
         parent::init();
-        
+
         // Add core config
         $config = require __DIR__ . '/../config.php';
-        
+
         // Add custom config if it exists
         $customConfig = \Yii::getAlias($this->rbacConfigFile);
         if (file_exists($customConfig)) {
 	        $config = ArrayHelper::merge($config, require $customConfig);
         }
-        
+
         \Yii::configure($this, $config);
-        
+
         $this->userRoles = $this->defaultUserRoles;
-		
+
 		\Yii::$container->set('yii\mongodb\Collection', 'mozzler\rbac\mongodb\Collection');
 		\Yii::$container->set('yii\mongodb\ActiveQuery', 'mozzler\rbac\mongodb\ActiveQuery');
-		
+
 		// User may not exist (ie: In a console application)
 		if (\Yii::$app->has('user')) {
     		\Yii::$app->user->on(\yii\web\User::EVENT_AFTER_LOGIN, [$this, "initRoles"]);
 		}
     }
-	
+
 	/**
 	 * @param $context 		Action or Model instance
 	 * @param $operation	ie: find, update, delete
@@ -112,26 +119,26 @@ class RbacManager extends \yii\base\Component {
 	    if (!$this->isActive) {
 		    $this->setActive();
 	    }
-	    
+
 	    if ($this->is('admin') || $this->forceAdmin) {
 		    return true;
 	    }
-	    
+
 	    $policies = $this->getPolicies($context, $operation, $params);
 
 		return $this->processPolicies($policies, $params, get_class($context).':'.$operation);
     }
-    
+
     // return true, false or a filter
     protected function processPolicies($policiesByRole, $params, $name) {
 	    $this->log("Checking permission request for $name",__METHOD__);
-	    
+
 		if (sizeof($policiesByRole) == 0) {
 			// Grant access as there are no policies to check
 			$this->log('No valid policies found, granting full access for '.$name,__METHOD__);
 			return true;
 		}
-		
+
 		// Loop through all policies granting access immediately or building
 		// a list of filters
 		$filters = [];
@@ -142,20 +149,20 @@ class RbacManager extends \yii\base\Component {
 					$this->log("Skipping policy ($policyName) as it's for $role",__METHOD__);
 					continue;
 				}
-				
+
 				// Policy grants full access
 				if ($policy === true) {
 					$this->log("Policy ($policyName) accepted, granting full access for $name",__METHOD__);
 					return true;
 				}
-				
+
 				// Policy is false, so skip
 				if ($policy === false) {
 					continue;
 				}
-				
+
 				$policy = \Yii::createObject($policy);
-				
+
 				if ($policy instanceof \mozzler\rbac\policies\BasePolicy) {
 					$result = $policy->run($params);
 					if ($result === true) {
@@ -175,51 +182,51 @@ class RbacManager extends \yii\base\Component {
 				}
 			}
 		}
-		
+
 		// If filters exist, join them with an "OR" query
 		if (sizeof($filters) > 0) {
 			$this->log("Applying filter to $name:\n".print_r($filters,true),__METHOD__);
 			$filters = array_merge(['OR'], $filters);
-		
+
 			if (isset($params["_id"]) && isset($params["model"])) {
 				$this->log("Have a specific model, so attempting to fetch with Rbac filter to establish if permission is granted", __METHOD__);
-	
+
 				// A specific model is being requested, so need to perform a query with the filter
 				// to establish if permission is granted
 				$model = $params['model'];
-				
+
 				$query = $model->find();
 				$query->andWhere($filters);
 				$query->andWhere([
 					'_id' => $params['_id']
 				]);
-				
+
 				$query->checkPermissions = false;
 				$results = $query->one();
-				
+
 				if ($results) {
 					// Found the model with the security filter applied so the user has permission to access
 					$this->log('Model '.$params['_id'].' was found, permission granted', __METHOD__);
 					return true;
 				}
-				
+
 				// Didn't find the model with the security model appied so the user can not access
 				$this->log('Model '.$params['_id'].' was not found, permission denied', __METHOD__);
 				return false;
 			}
-			
+
 			return $filters;
 		}
-		
+
 		// No filters exist, but policies existed, so deny access
 		$this->log("No policies matched, denying access for $name",__METHOD__);
 		return false;
 	}
-	
+
 	/**
 	 * Check if the currently logged in user can access a specific
 	 * action on a controller linked to a model.
-	 * 
+	 *
 	 * @param	$controller	mixed	Instance of `yii\base\Controller` or a string representing the full class name of a controller
 	 * @param	$action	string		String representation of the action (ie: `index`)
 	 * @return	boolean				True if the current user can access the action on the controller
@@ -245,17 +252,17 @@ class RbacManager extends \yii\base\Component {
 
 		return $this->canAccessAction($action);
 	}
-    
+
     public function canAccessAction($action) {
 		if ($action::className() == ErrorAction::className()) {
 			return true;
 		}
-		
+
 		return $this->can($action->controller, $action->id, [
 			'action' => $action
 		]);
 	}
-	
+
 	public function canAccessCollection($collection, $operation, $metadata=[]) {
 		// Check if the collection should not have RBAC applied
 		if (in_array($collection, $this->ignoredCollections)) {
@@ -268,13 +275,13 @@ class RbacManager extends \yii\base\Component {
             // If it's something you want to ignore complete then try adding it to the ignoreCollection list. E.g `\Yii::$app->rbac->ignoreCollection('mozzler.auth.refresh_tokens')`
 			throw new UnknownClassException("Unable to locate Model class associated with collection ($collection)");
 		}
-		
+
 		$model = \Yii::createObject($this->collectionModels[$collection]);
 		$metadata['model'] = $model;
-		
+
 		return $this->can($model, $operation, $metadata);
 	}
-	
+
 	public function canAccessModel($model, $operation, $metadata=[]) {
 		$result = $this->can($model, $operation, $metadata);
 
@@ -286,7 +293,7 @@ class RbacManager extends \yii\base\Component {
 		else {
 			/**
 			 * We have a database filter that determines if the user can access this model.
-			 * 
+			 *
 			 * Run the query trying to find the model.
 			 */
 			$query = $model->find();
@@ -294,30 +301,30 @@ class RbacManager extends \yii\base\Component {
 			$query->andWhere([
 				"_id" => $model->id
 			]);
-			
+
 			$query->checkPermissions = false;
 			\Yii::trace("About to see if I have permission to $operation this ".$model->collectionName());
 			$queryCount = $query->count();
-			
+
 			if ($queryCount >= 1) {
 				// found the model with the security filter applied so
 				// user has permission to access
 				return true;
 			}
-			
+
 			// didn't find the model with the security model appied
 			// so the user can not access
 			return false;
 		}
 	}
-	
+
 	/**
 	 * Check if the current user belongs to the given role
 	 */
 	public function is($role) {
 		return in_array($role, $this->userRoles);
 	}
-	
+
 	/**
 	 * Determine the roles available for this user
 	 */
@@ -330,17 +337,17 @@ class RbacManager extends \yii\base\Component {
 
 		if ($user) {
 			$this->log("Found user ".$user->id." with roles: ".join($this->getUserRoles($user),", "), __METHOD__);
-			
+
 			// Initialise roles with defaults plus registered user roles
 			$this->userRoles = array_merge($this->defaultUserRoles, $this->registeredUserRoles);
-			
+
 			// Add this user's custom roles
 			$this->userRoles = array_merge($this->userRoles, $this->getUserRoles($user));
-			
+
 			$this->log('Initialised with user roles: '.join(", ", $this->userRoles),__METHOD__);
 		}
 	}
-	
+
 	/**
 	 * Get all the roles linked to this user
 	 */
@@ -349,13 +356,13 @@ class RbacManager extends \yii\base\Component {
 		if (is_array($user->roles)) {
 			return $user->roles;
 		}
-		
+
 		return [];
 	}
-	
+
 	protected function getPolicies($context, $operation, $params) {
 		$foundConfigs = [];
-		
+
 		$classes = array_merge([get_class($context)], class_parents($context));
 		foreach ($classes as $className) {
 			// Load RBAC configuration for this controller
@@ -363,7 +370,7 @@ class RbacManager extends \yii\base\Component {
 				$rbac = $className::rbac();
 				$foundConfigs[$className] = $rbac;
 			}
-			
+
 			// Load RBAC custom configuration for defined for this controller
 			foreach ($this->policies as $role => $rolePolicies) {
 				// Locate any policies for this class
@@ -373,12 +380,12 @@ class RbacManager extends \yii\base\Component {
 					];
 				}
 			}
-			
+
 			if ($className == 'yii\base\Controller' || $className == 'yii\base\Model') {
 				break;
 			}
 		}
-		
+
 		// Merge all the policies in the correct order
 		$foundConfigs = array_reverse($foundConfigs);
 
@@ -389,13 +396,13 @@ class RbacManager extends \yii\base\Component {
 					// no policies for the requested operation, so skip
 					continue;
 				}
-				
+
 				$policies = $rolePolicies[$operation];
-				
+
 				if (!isset($policiesByRole[$role])) {
 					$policiesByRole[$role] = [];
 				}
-				
+
 				if (!is_array($policies)) {
 					$policies = [
 						'default' => $policies
@@ -405,21 +412,21 @@ class RbacManager extends \yii\base\Component {
 				$policiesByRole[$role] = ArrayHelper::merge($policiesByRole[$role], $policies);
 			}
 		}
-		
+
 		return $policiesByRole;
 	}
-	
+
 	public function registerModel($collectionName, $className) {
 		$this->collectionModels[$collectionName] = $className;
 	}
-	
+
 	protected function log($message, $meta) {
 		if ($this->traceEnabled) {
 			\Yii::trace('Rbac: '.$message, $meta);
 			//\Codeception\Util\Debug::debug($message);
 		}
 	}
-	
+
 	/**
 	 * Get a list of key/value list of options
 	 */
@@ -428,20 +435,29 @@ class RbacManager extends \yii\base\Component {
 		foreach ($this->roles as $roleName => $role) {
 			$options[$roleName] = $role['name'];
 		}
-		
+		// Example $options:
+        /*
+          array (
+            'public' => 'Public',
+            'admin' => 'Administrator',
+            'registered' => 'Registered User',
+          )
+        */
+        \Codeception\Util\Debug::debug("The " . __METHOD__. " role options are: ". var_export($options, true) . "\nBased on the roles: ". var_export($this->roles, true));
+
 		if ($excludeDefaults) {
 			unset($options['public']);
 			unset($options['registered']);
 		}
-		
+
 		return $options;
 	}
-	
+
 	public function setActive() {
 		$this->isActive = true;
 		$this->initRoles();
 	}
-	
+
 	public function ignoreCollection($collectionName) {
 		if (!in_array($collectionName, $this->ignoredCollections)) {
 			$this->log("Ignoring permission checks on $collectionName", __METHOD__);
