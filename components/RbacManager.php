@@ -443,7 +443,6 @@ class RbacManager extends \yii\base\Component {
             'registered' => 'Registered User',
           )
         */
-        \Codeception\Util\Debug::debug("The " . __METHOD__. " role options are: ". var_export($options, true) . "\nBased on the roles: ". var_export($this->roles, true));
 
 		if ($excludeDefaults) {
 			unset($options['public']);
