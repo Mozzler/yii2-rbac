@@ -128,10 +128,6 @@ class RbacManager extends \yii\base\Component {
 		    $this->setActive();
 	    }
 
-	    if ($this->is('admin') || $this->forceAdmin) {
-		    return true;
-	    }
-
 	    $policies = $this->getPolicies($context, $operation, $params);
 
 		return $this->processPolicies($policies, $params, get_class($context).':'.$operation);
