@@ -439,14 +439,16 @@ class RbacManager extends \yii\base\Component {
 	/**
 	 * Get a list of key/value list of options
 	 */
-	public function getRoleOptions() {
+	public function getRoleOptions($includeHidden=false) {
 		$options = [];
 		foreach ($this->roles as $roleName => $role) {
 			$options[$roleName] = $role['name'];
 		}
 
-		foreach ($this->hiddenUserRoles as $role) {
-			unset($options[$role]);
+		if (!$includeHidden) {
+			foreach ($this->hiddenUserRoles as $role) {
+				unset($options[$role]);
+			}
 		}
 
 		return $options;
