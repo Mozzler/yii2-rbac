@@ -15,6 +15,12 @@ class Collection extends BaseCollection {
 	
 	public function find($condition=[], $fields=[], $options=[]) {
 		$condition = $this->buildPermissionFilter('find', $condition);
+
+		if ($condition === false) {
+			// no permission, so return empty array
+			return [];
+		}
+
 		return parent::find($condition, $fields, $options);
 	}
 	
@@ -28,6 +34,8 @@ class Collection extends BaseCollection {
 		if ($filter === true) {
 			// full access permitted, so don't apply any filtering
 			return $condition;
+		} else if ($filter === false) {
+			return false;
 		} else if ($filter) {
 			// apply the filter as an AND on the query
 			if (sizeof($condition) == 0) {
@@ -96,6 +104,12 @@ class Collection extends BaseCollection {
 			}
 
 			$condition = $this->buildPermissionFilter('find', $condition);
+
+			if ($condition === false) {
+				// if no permission, return 0
+				return 0;
+			}
+
 			return parent::count($condition, $options);
 		}
     
