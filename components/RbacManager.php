@@ -274,6 +274,7 @@ class RbacManager extends \yii\base\Component {
 	public function canAccessCollection($collection, $operation, $metadata=[]) {
 		// Check if the collection should not have RBAC applied
 		if (in_array($collection, $this->ignoredCollections)) {
+			$this->log("Collection ({$collection}) is ignored, granting access for operation: $operation", __METHOD__);
 			return true;
 		}
 
@@ -311,7 +312,6 @@ class RbacManager extends \yii\base\Component {
 			]);
 
 			$query->checkPermissions = false;
-			\Yii::trace("About to see if I have permission to $operation this ".$model->collectionName());
 			$queryCount = $query->count();
 
 			if ($queryCount >= 1) {
@@ -431,7 +431,7 @@ class RbacManager extends \yii\base\Component {
 	protected function log($message, $meta) {
 		if ($this->traceEnabled) {
 			\Yii::trace('Rbac: '.$message, $meta);
-			// TODO: Detec if in unit test environment
+			// TODO: Detect if in unit test environment
 			//\Codeception\Util\Debug::debug($message);
 		}
 	}
