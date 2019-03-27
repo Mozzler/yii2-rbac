@@ -132,7 +132,7 @@ class RbacManager extends \yii\base\Component {
 		    return true;	
 	    }
 
-	    $policies = $this->getPolicies($context, $operation, $params);
+		$policies = $this->getPolicies($context, $operation, $params);
 
 		return $this->processPolicies($policies, $params, get_class($context).':'.$operation);
     }
@@ -383,9 +383,9 @@ class RbacManager extends \yii\base\Component {
 			foreach ($this->policies as $role => $rolePolicies) {
 				// Locate any policies for this class
 				if (isset($rolePolicies[$className])) {
-					$foundConfigs[$className] = [
+					$foundConfigs[$className] = ArrayHelper::merge(isset($foundConfigs[$className]) ? $foundConfigs[$className] : [], [
 						$role => $rolePolicies[$className]
-					];
+					]);
 				}
 			}
 
