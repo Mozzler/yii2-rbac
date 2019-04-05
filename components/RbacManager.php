@@ -80,6 +80,12 @@ class RbacManager extends \yii\base\Component {
 	public $traceEnabled = false;
 
 	/**
+	 * 1 = Normal
+	 * 2 = Extra verbose
+	 */
+	public $traceLevel = 1;
+
+	/**
 	 * Boolean indicating if the RBAC manager is active. Internally this is
 	 * set once Yii2 application is initialised (App::EVENT_BEFORE_REQUEST)
 	 */
@@ -130,17 +136,19 @@ class RbacManager extends \yii\base\Component {
 		
 		if ($this->forceAdmin) {	
 		    return true;	
-	    }
+		}
+		
+		$checkName = get_class($context).':'.$operation;
+		$this->log("Checking permission request for $checkName", __METHOD__);
 
-		$policies = $this->getPolicies($context, $operation, $params);
+		$policies = $this->getRolePolicies($context, $operation, $params);
+		$this->log("Processing policies for operation $operation: ".print_r($policies,true), __METHOD__,true);
 
-		return $this->processPolicies($policies, $params, get_class($context).':'.$operation);
+		return $this->processPolicies($policies, $params, $checkName);
     }
 
     // return true, false or a filter
     protected function processPolicies($policiesByRole, $params, $name) {
-	    $this->log("Checking permission request for $name",__METHOD__);
-
 		if (sizeof($policiesByRole) == 0) {
 			// Grant access as there are no policies to check
 			$this->log('No valid policies found, granting full access for '.$name,__METHOD__);
@@ -154,7 +162,7 @@ class RbacManager extends \yii\base\Component {
 			foreach ($rolePolicies as $policyName => $policy) {
 				// Skip the policy if it doesn't apply to any roles for this user
 				if (!$this->is($role)) {
-					$this->log("Skipping policy ($policyName) as it's for $role",__METHOD__);
+					$this->log("Skipping policy ($policyName) as it's for $role",__METHOD__,true);
 					continue;
 				}
 
@@ -179,7 +187,7 @@ class RbacManager extends \yii\base\Component {
 						return true;
 					} else if ($result === false) {
 						// Policy doesn't apply, so skip
-						$this->log("Policy ($policyName) doesn't apply, skipping",__METHOD__);
+						$this->log("Policy ($policyName) doesn't apply, skipping",__METHOD__,true);
 						continue;
 					} else if (is_array($result)) {
 						$this->log("Policy ($policyName) has a filter",__METHOD__);
@@ -197,7 +205,7 @@ class RbacManager extends \yii\base\Component {
 			$filters = array_merge(['OR'], $filters);
 
 			if (isset($params["_id"]) && isset($params["model"])) {
-				$this->log("Have a specific model, so attempting to fetch with Rbac filter to establish if permission is granted", __METHOD__);
+				$this->log("Have a specific model, so attempting to fetch with Rbac filter to establish if permission is granted", __METHOD__,true);
 
 				// A specific model is being requested, so need to perform a query with the filter
 				// to establish if permission is granted
@@ -344,7 +352,7 @@ class RbacManager extends \yii\base\Component {
 		$user = \Yii::$app->user->getIdentity();
 
 		if ($user) {
-			$this->log("Found user ".$user->id." with roles: ".join($this->getUserRoles($user),", "), __METHOD__);
+			$this->log("Found user ".$user->id." with roles: ".join($this->getUserRoles($user),", "), __METHOD__,true);
 
 			// Initialise roles with defaults plus registered user roles
 			$this->userRoles = array_merge($this->defaultUserRoles, $this->registeredUserRoles);
@@ -352,7 +360,7 @@ class RbacManager extends \yii\base\Component {
 			// Add this user's custom roles
 			$this->userRoles = array_merge($this->userRoles, $this->getUserRoles($user));
 
-			$this->log('Initialised with user roles: '.join(", ", $this->userRoles),__METHOD__);
+			$this->log('Initialised with user roles: '.join(", ", $this->userRoles),__METHOD__,true);
 		}
 	}
 
@@ -368,7 +376,7 @@ class RbacManager extends \yii\base\Component {
 		return [];
 	}
 
-	protected function getPolicies($context, $operation, $params) {
+	protected function getPolicies($context) {
 		$foundConfigs = [];
 
 		$classes = array_merge([get_class($context)], class_parents($context));
@@ -393,6 +401,14 @@ class RbacManager extends \yii\base\Component {
 				break;
 			}
 		}
+
+		return $foundConfigs;
+	}
+
+	protected function getRolePolicies($context, $operation, $params) {
+		$foundConfigs = $this->getPolicies($context);
+		$this->log('Found policies:', __METHOD__,true);
+		$this->log(print_r($foundConfigs,true), __METHOD__,true);
 
 		// Merge all the policies in the correct order
 		$foundConfigs = array_reverse($foundConfigs);
@@ -428,8 +444,12 @@ class RbacManager extends \yii\base\Component {
 		$this->collectionModels[$collectionName] = $className;
 	}
 
-	protected function log($message, $meta) {
+	protected function log($message, $meta, $verbose=false) {
 		if ($this->traceEnabled) {
+			if ($verbose && $this->traceLevel != 2) {
+				return;
+			}
+
 			\Yii::trace('Rbac: '.$message, $meta);
 			// TODO: Detect if in unit test environment
 			//\Codeception\Util\Debug::debug($message);
