@@ -199,7 +199,45 @@ class ActiveRecord extends \yii\mongodb\ActiveRecord {
         }
 	}
 	
-	// TODO: Add checkPermission support to delete
+    // TODO: Add checkPermission support to delete
+    public static function deleteAll($condition = [], $options = [], $checkPermissions=true)
+    {
+        $collection = static::getCollection();
+        $collection->checkPermissions = $checkPermissions;
+        return $collection->remove($condition, $options);
+    }
+
+    public function delete($checkPermissions=true)
+    {
+        $result = false;
+        if ($this->beforeDelete()) {
+            $result = $this->deleteInternal($checkPermissions);
+            $this->afterDelete();
+        }
+        return $result;
+    }
+    /**
+     * @see ActiveRecord::delete()
+     * @throws StaleObjectException
+     */
+    protected function deleteInternal($checkPermissions=true)
+    {
+        // we do not check the return value of deleteAll() because it's possible
+        // the record is already deleted in the database and thus the method will return 0
+        $condition = $this->getOldPrimaryKey(true);
+        $lock = $this->optimisticLock();
+        if ($lock !== null) {
+            $condition[$lock] = $this->$lock;
+        }
+        $collection = static::getCollection();
+        $collection->checkPermissions = $checkPermissions;
+        $result = $collection->remove($condition);
+        if ($lock !== null && !$result) {
+            throw new StaleObjectException('The object being deleted is outdated.');
+        }
+        $this->setOldAttributes(null);
+        return $result;
+    }
 }
 	
 ?>
