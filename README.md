@@ -1,3 +1,8 @@
+# Mozzler Yii2 RBAC
+
+## Changelog
+
+* **v1.0** This version includes RBAC inheritance. Meaning the parent object's RBAC policies will also be applied to a model.
 
 ## Installation
 
