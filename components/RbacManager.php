@@ -376,34 +376,28 @@ class RbacManager extends \yii\base\Component {
 		return [];
 	}
 
-	protected function getPolicies($context) {
-		$foundConfigs = [];
+    protected function getPolicies($context) {
+        $foundConfigs = [];
 
-		$classes = array_merge([get_class($context)], class_parents($context));
-		foreach ($classes as $className) {
-			// Load RBAC configuration for this controller
-			if (method_exists($className, 'rbac')) {
-				$rbac = $className::rbac();
-				$foundConfigs[$className] = $rbac;
-			}
-
-			// Load RBAC custom configuration for defined for this controller
-			foreach ($this->policies as $role => $rolePolicies) {
-				// Locate any policies for this class
-				if (isset($rolePolicies[$className])) {
-					$foundConfigs[$className] = ArrayHelper::merge(isset($foundConfigs[$className]) ? $foundConfigs[$className] : [], [
-						$role => $rolePolicies[$className]
-					]);
-				}
-			}
-
-			if ($className == 'yii\base\Controller' || $className == 'yii\base\Model') {
-				break;
-			}
-		}
-
-		return $foundConfigs;
-	}
+        // -- Have removed the RBAC Object Inheritance checks that this used to do in v1.0
+        // Instead you can use `return ArrayHelper::merge(parent::rbac(), [ ... Custom RBAC checks here ... ]` in your RBAC model method
+        $className = get_class($context);
+        // Load RBAC configuration for this controller
+        if (method_exists($className, 'rbac')) {
+            $rbac = $className::rbac();
+            $foundConfigs[$className] = $rbac;
+        }
+        // Load RBAC custom configuration for defined for this controller
+        foreach ($this->policies as $role => $rolePolicies) {
+            // Locate any policies for this class
+            if (isset($rolePolicies[$className])) {
+                $foundConfigs[$className] = ArrayHelper::merge(isset($foundConfigs[$className]) ? $foundConfigs[$className] : [], [
+                    $role => $rolePolicies[$className]
+                ]);
+            }
+        }
+        return $foundConfigs;
+    }
 
 	protected function getRolePolicies($context, $operation, $params) {
 		$foundConfigs = $this->getPolicies($context);
