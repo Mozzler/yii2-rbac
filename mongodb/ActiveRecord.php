@@ -136,6 +136,30 @@ class ActiveRecord extends \yii\mongodb\ActiveRecord {
 
         return $this->updateInternal($attributeNames, $checkPermissions);
     }
+
+
+    /**
+     * Updates all documents in the collection using the provided attribute values and conditions.
+     * For example, to change the status to be 1 for all customers whose status is 2:
+     *
+     * ```php
+     * Customer::updateAll(['status' => 1], ['status' => 2]);
+     * ```
+     * Adds support for permission checks
+     *
+     * @see \yii\mongodb\ActiveRecord::updateAll()
+     * @param   array       $attributes         attribute values (name-value pairs) to be saved into the collection
+     * @param   array       $condition          description of the objects to update.  Please refer to [[Query::where()]] on how to specify this parameter.
+     * @param   array       $options            list of options in format: optionName => optionValue.
+     * @param   boolean     $checkPermissions	Whether to check permissions based on the current logged in user.
+     * @return int                              the number of documents updated.
+     */
+    public static function updateAll($attributes, $condition = [], $options = [], $checkPermissions = true)
+    {
+        $collection = static::getCollection();
+        $collection->checkPermissions = $checkPermissions;
+        return $collection->update($condition, $attributes, $options);
+    }
     /**
 	 * Add support for permission checks
 	 *
