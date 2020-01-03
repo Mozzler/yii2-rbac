@@ -119,7 +119,8 @@ class RbacManager extends \yii\base\Component {
 
 		// User may not exist (ie: In a console application)
 		if (\Yii::$app->has('user')) {
-    		\Yii::$app->user->on(\yii\web\User::EVENT_AFTER_LOGIN, [$this, "initRoles"]);
+			\Yii::$app->user->on(\yii\web\User::EVENT_AFTER_LOGIN, [$this, "initRoles"]);
+			$this->initRoles();
 		}
     }
 
