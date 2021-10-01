@@ -17,8 +17,8 @@ class Collection extends BaseCollection {
 		$condition = $this->buildPermissionFilter('find', $condition);
 
 		if ($condition === false) {
-			// no permission, so generate a query that will always return nothing
-			return parent::find(['1' => '2'], $fields, $options);
+			// No permission, so generate a query that will always return nothing
+			return parent::find(['_id' => '-0'], $fields, $options);
 		}
 
 		return parent::find($condition, $fields, $options);
