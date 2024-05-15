@@ -353,7 +353,7 @@ class RbacManager extends \yii\base\Component {
 		$user = \Yii::$app->user->getIdentity();
 
 		if ($user) {
-			$this->log("Found user ".$user->id." with roles: ".join($this->getUserRoles($user),", "), __METHOD__,true);
+			$this->log("Found user ".$user->id." with roles: ".join(", ",$this->getUserRoles($user)), __METHOD__,true);
 
 			// Initialise roles with defaults plus registered user roles
 			$this->userRoles = array_merge($this->defaultUserRoles, $this->registeredUserRoles);
