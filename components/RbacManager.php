@@ -86,7 +86,7 @@ class RbacManager extends \yii\base\Component
     /**
      * Roles of the current logged in user
      */
-    private $userRoles = [];
+    private $userRoles = ['public'];
     /**
      * Mapping of collections to models
      */
@@ -129,7 +129,7 @@ class RbacManager extends \yii\base\Component
      */
     protected function initRoles()
     {
-        $this->userRoles = []; // Clear it in case we login different users over the course of a processing a request
+        $this->userRoles = $this->defaultUserRoles; // Clear it in case we login different users over the course of a processing a request
         $user = null;
 
         if (!empty($this->user)) {
@@ -223,11 +223,17 @@ class RbacManager extends \yii\base\Component
         return $this->canAccessAction($action);
     }
 
+
     public function canAccessAction($action)
     {
         if ($action instanceof ErrorAction) {
             return true;
         }
+
+//        if ($action::className() == ErrorAction::className()) {
+//            return true;
+//        }
+
 
         return $this->can($action->controller, $action->id, [
             'action' => $action
