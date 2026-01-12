@@ -17,7 +17,7 @@ class ActiveRecord extends \yii\mongodb\ActiveRecord {
 	public function init() {
 		parent::init();
 		
-		\Yii::$app->rbac->registerModel($this->collectionName(), $this->className());
+		\Yii::$app->rbac->registerModel($this->collectionName(), static::class);
 	}
 	
 	/**
@@ -60,7 +60,7 @@ class ActiveRecord extends \yii\mongodb\ActiveRecord {
      * @param	boolean		$checkPermissions	Whether to check permissions based on the current logged in user.
      */
 	public static function find($checkPermissions=true) {
-		$query = \Yii::createObject(ActiveQuery::className(), [get_called_class()]);
+		$query = \Yii::createObject(ActiveQuery::class, [get_called_class()]);
 		$query->checkPermissions = $checkPermissions;
 		return $query;
     }

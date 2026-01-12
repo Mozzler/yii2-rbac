@@ -68,14 +68,16 @@ class Collection extends BaseCollection {
 
     public function save($data, $options=[]) {
     	$operation = "insert";
+    	$metadata = [];
     	
     	if (isset($data['_id']) || isset($data->_id)) {
     		$operation = "update";
     		
-    		$metadata = [];
-		    if (isset($condition['_id'])) {
-			    $metadata['_id'] = $data['_id'];
-		    }
+    		if (isset($data['_id'])) {
+    			$metadata['_id'] = $data['_id'];
+    		} elseif (isset($data->_id)) {
+    			$metadata['_id'] = $data->_id;
+    		}
     	}
 
     	$this->checkPermissions($operation, $metadata);
