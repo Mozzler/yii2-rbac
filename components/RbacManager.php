@@ -185,7 +185,8 @@ class RbacManager extends \yii\base\Component
      */
     protected function getUserRoles($user)
     {
-        if (is_array($user->roles)) {
+        // -- PHP 8.1+ compatibility: Check if property exists and is array
+        if (isset($user->roles) && is_array($user->roles)) {
             return $user->roles;
         }
 
