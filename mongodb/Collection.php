@@ -13,15 +13,16 @@ class Collection extends BaseCollection {
 	public $checkPermissions = true;
 	public $rbacOperation;
 	
-	public function find($condition=[], $fields=[], $options=[]) {
+	// -- PHP 8.3 / yii2-mongodb 3.0+: Added $execOptions parameter
+	public function find($condition=[], $fields=[], $options=[], $execOptions=[]) {
 		$condition = $this->buildPermissionFilter('find', $condition);
 
 		if ($condition === false) {
 			// No permission, so generate a query that will always return nothing
-			return parent::find(['_id' => '-0'], $fields, $options);
+			return parent::find(['_id' => '-0'], $fields, $options, $execOptions);
 		}
 
-		return parent::find($condition, $fields, $options);
+		return parent::find($condition, $fields, $options, $execOptions);
 	}
 	
 	protected function buildPermissionFilter($operation, $condition=[]) {
@@ -49,13 +50,15 @@ class Collection extends BaseCollection {
 		return $condition;
 	}
 	
-	public function insert($data, $options = [], $throwException = false) {
+	// -- PHP 8.3 / yii2-mongodb 3.0+: Added $execOptions parameter, removed $throwException
+	public function insert($data, $options = [], $execOptions = []) {
     	$this->checkPermissions("insert");
     	
-		return parent::insert($data, $options);
+		return parent::insert($data, $options, $execOptions);
     }
     
-    public function update($condition, $newData, $options = [], $throwException = false) {
+    // -- PHP 8.3 / yii2-mongodb 3.0+: Added $execOptions parameter, removed $throwException
+    public function update($condition, $newData, $options = [], $execOptions = []) {
 	    $metadata = [];
 	    if (isset($condition['_id'])) {
 		    $metadata['_id'] = $condition['_id'];
@@ -63,10 +66,11 @@ class Collection extends BaseCollection {
 	    
 	    $this->checkPermissions("update", $metadata);
 	    
-		return parent::update($condition, $newData, $options);
+		return parent::update($condition, $newData, $options, $execOptions);
     }
 
-    public function save($data, $options=[]) {
+    // -- PHP 8.3 / yii2-mongodb 3.0+: Added $execOptions parameter
+    public function save($data, $options=[], $execOptions=[]) {
     	$operation = "insert";
     	$metadata = [];
     	
@@ -81,10 +85,11 @@ class Collection extends BaseCollection {
     	}
 
     	$this->checkPermissions($operation, $metadata);
-    	return parent::save($data, $options);
+    	return parent::save($data, $options, $execOptions);
     }
     
-    public function remove($condition = [], $options=[]) {
+    // -- PHP 8.3 / yii2-mongodb 3.0+: Added $execOptions parameter
+    public function remove($condition = [], $options=[], $execOptions=[]) {
 	    $metadata = [];
 	    if (isset($condition['_id'])) {
 		    $metadata['_id'] = $condition['_id'];
@@ -92,10 +97,11 @@ class Collection extends BaseCollection {
 
     	$this->checkPermissions("delete", $metadata);
     	
-    	return parent::remove($condition, $options);
+    	return parent::remove($condition, $options, $execOptions);
 		}
 		
-		public function count($condition = [], $options = [])
+		// -- PHP 8.3 / yii2-mongodb 3.0+: Added $execOptions parameter
+		public function count($condition = [], $options = [], $execOptions = [])
 		{
 			/**
 			 * DataGrid sometimes passes null / false to the condition, so
@@ -112,7 +118,7 @@ class Collection extends BaseCollection {
 				return 0;
 			}
 
-			return parent::count($condition, $options);
+			return parent::count($condition, $options, $execOptions);
 		}
     
     private function checkPermissions($operation, $metadata=[]) {
