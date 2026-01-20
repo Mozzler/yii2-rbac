@@ -191,7 +191,7 @@ class ActiveRecord extends \yii\mongodb\ActiveRecord {
         // that it doesn't change anything and thus returns 0.
         $collection = static::getCollection();
         $collection->checkPermissions = $checkPermissions;
-        $rows = $collection->update($condition, $values, [], true);
+        $rows = $collection->update($condition, $values, [], []); // NB: $collection->update last arg changed to be an array (was a bool set to true) in PHP 8 and the updated MongoDB to go with it
         if ($lock !== null && !$rows) {
             throw new StaleObjectException('The object being updated is outdated.');
         }
