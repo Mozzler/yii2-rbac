@@ -110,7 +110,7 @@ class ActiveRecord extends \yii\mongodb\ActiveRecord {
         
         $collection = static::getCollection();
         $collection->checkPermissions = $checkPermissions;
-        $newId = $collection->insert($values, [], true);
+        $newId = $collection->insert($values, [], []);
         $this->setAttribute('_id', $newId);
         $values['_id'] = $newId;
         $changedAttributes = array_fill_keys(array_keys($values), null);
