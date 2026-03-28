@@ -6,15 +6,21 @@ use mozzler\rbac\PermissionDeniedException;
 
 /**
  * Custom Collection class that adds `checkPermission` and
- * `rbacOperation` support to MongoDB Collection
+ * `rbacOperation` support to MongoDB Collection.
+ *
+ * **Compatibility:** Overrides are aligned with `yii\mongodb\Collection` in
+ * **yiisoft/yii2-mongodb 3.x** (fourth parameter `$execOptions` on find / insert / update /
+ * save / remove / count). PHP 8 requires Liskov-compatible method signatures, so this class
+ * does not match yii2-mongodb 2.x. Use current **Yii 2.0** (e.g. 2.0.54+) together with
+ * yii2-mongodb 3.x as declared in this package's composer requirements.
  */
 class Collection extends BaseCollection {
 	
 	public $checkPermissions = true;
 	public $rbacOperation;
 	
-	// -- PHP 8.3 / yii2-mongodb 3.0+: Added $execOptions parameter
-	public function find($condition=[], $fields=[], $options=[], $execOptions=[]) {
+	// -- yii2-mongodb 3.x: mirror parent and forward $execOptions
+	public function find($condition = [], $fields = [], $options = [], $execOptions = []) {
 		$condition = $this->buildPermissionFilter('find', $condition);
 
 		if ($condition === false) {
@@ -50,14 +56,14 @@ class Collection extends BaseCollection {
 		return $condition;
 	}
 	
-	// -- PHP 8.3 / yii2-mongodb 3.0+: Added $execOptions parameter, removed $throwException
+	// -- yii2-mongodb 3.x: $execOptions replaces legacy boolean fourth arg from extension 2.x
 	public function insert($data, $options = [], $execOptions = []) {
     	$this->checkPermissions("insert");
     	
 		return parent::insert($data, $options, $execOptions);
     }
     
-    // -- PHP 8.3 / yii2-mongodb 3.0+: Added $execOptions parameter, removed $throwException
+    // -- yii2-mongodb 3.x: $execOptions replaces legacy boolean fourth arg from extension 2.x
     public function update($condition, $newData, $options = [], $execOptions = []) {
 	    $metadata = [];
 	    if (isset($condition['_id'])) {
@@ -69,8 +75,8 @@ class Collection extends BaseCollection {
 		return parent::update($condition, $newData, $options, $execOptions);
     }
 
-    // -- PHP 8.3 / yii2-mongodb 3.0+: Added $execOptions parameter
-    public function save($data, $options=[], $execOptions=[]) {
+    // -- yii2-mongodb 3.x: forward $execOptions; update metadata from $document (not condition)
+    public function save($data, $options = [], $execOptions = []) {
     	$operation = "insert";
     	$metadata = [];
     	
@@ -88,38 +94,35 @@ class Collection extends BaseCollection {
     	return parent::save($data, $options, $execOptions);
     }
     
-    // -- PHP 8.3 / yii2-mongodb 3.0+: Added $execOptions parameter
-    public function remove($condition = [], $options=[], $execOptions=[]) {
-	    $metadata = [];
-	    if (isset($condition['_id'])) {
-		    $metadata['_id'] = $condition['_id'];
-	    }
+    // -- yii2-mongodb 3.x: forward $execOptions to parent
+    public function remove($condition = [], $options = [], $execOptions = []) {
+        $metadata = [];
+        if (isset($condition['_id'])) {
+            $metadata['_id'] = $condition['_id'];
+        }
 
-    	$this->checkPermissions("delete", $metadata);
-    	
-    	return parent::remove($condition, $options, $execOptions);
-		}
-		
-		// -- PHP 8.3 / yii2-mongodb 3.0+: Added $execOptions parameter
-		public function count($condition = [], $options = [], $execOptions = [])
-		{
-			/**
-			 * DataGrid sometimes passes null / false to the condition, so
-			 * need to ensure we have an array
-			 */
-			if (!$condition) {
-				$condition = [];
-			}
+        $this->checkPermissions('delete', $metadata);
 
-			$condition = $this->buildPermissionFilter('find', $condition);
+        return parent::remove($condition, $options, $execOptions);
+    }
 
-			if ($condition === false) {
-				// if no permission, return 0
-				return 0;
-			}
+    // -- yii2-mongodb 3.x: forward $execOptions to parent
+    public function count($condition = [], $options = [], $execOptions = [])
+    {
+        // -- DataGrid sometimes passes null / false to the condition, so ensure we have an array
+        if (!$condition) {
+            $condition = [];
+        }
 
-			return parent::count($condition, $options, $execOptions);
-		}
+        $condition = $this->buildPermissionFilter('find', $condition);
+
+        if ($condition === false) {
+            // if no permission, return 0
+            return 0;
+        }
+
+        return parent::count($condition, $options, $execOptions);
+    }
     
     private function checkPermissions($operation, $metadata=[]) {
 	    if ($this->checkPermissions) {
